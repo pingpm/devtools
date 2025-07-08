@@ -1,0 +1,1709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON格式化工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(15px);
+            padding: 0;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .navbar-brand {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d3748;
+            text-decoration: none;
+            margin-right: 40px;
+            padding: 20px 0;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .navbar-nav {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 5px;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 18px 20px;
+            color: #4a5568;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 8px 0;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .nav-link:hover::before {
+            left: 100%;
+        }
+
+        .nav-link:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            position: relative;
+        }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 20px;
+            right: 20px;
+            height: 3px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .nav-icon {
+            font-size: 16px;
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #4a5568;
+            cursor: pointer;
+            margin-left: auto;
+        }
+
+        .content-area {
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .panel-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f7fafc;
+            color: #4a5568;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #edf2f7;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #fed7d7;
+            color: #c53030;
+            border: 1px solid #feb2b2;
+        }
+
+        .btn-danger:hover {
+            background: #fbb6ce;
+            transform: translateY(-1px);
+        }
+
+        .input-area {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-area:focus {
+            border-color: #667eea;
+        }
+
+        .output-area {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            background: #f8fafc;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .json-viewer {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .json-key {
+            color: #d63384;
+            font-weight: 600;
+        }
+
+        .json-string {
+            color: #198754;
+        }
+
+        .json-number {
+            color: #0d6efd;
+        }
+
+        .json-boolean {
+            color: #6f42c1;
+            font-weight: 600;
+        }
+
+        .json-null {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .json-bracket {
+            color: #495057;
+            font-weight: bold;
+        }
+
+        .collapse-btn {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .collapse-btn:hover {
+            background: #5a67d8;
+            transform: scale(1.1);
+        }
+
+        .collapsed {
+            display: none;
+        }
+
+        .json-line {
+            margin: 2px 0;
+            padding: 2px 0;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+        }
+
+        .json-line:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .status-valid {
+            color: #059669;
+            font-weight: 500;
+        }
+
+        .status-invalid {
+            color: #dc2626;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            border-left: 4px solid #dc2626;
+        }
+
+        .collapse-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* 图片Base64互转工具样式 */
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 12px 24px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+        }
+
+        .conversion-mode {
+            display: block;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #f8fafc;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e6f3ff;
+            transform: scale(1.02);
+        }
+
+        .upload-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .upload-area h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .upload-area p {
+            color: #718096;
+            margin-bottom: 10px;
+        }
+
+        .image-preview-section, .base64-output-section, .decoded-image-section {
+            margin-bottom: 30px;
+        }
+
+        .image-preview-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .image-preview {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            object-fit: contain;
+        }
+
+        .decoded-image {
+            max-width: 400px;
+            max-height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            object-fit: contain;
+        }
+
+        .image-info, .decoded-info {
+            flex: 1;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .base64-container, .base64-input-container {
+            position: relative;
+        }
+
+        .base64-textarea {
+            width: 100%;
+            height: 200px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.3s ease;
+            word-break: break-all;
+            line-height: 1.5;
+        }
+
+        .base64-textarea:focus {
+            border-color: #667eea;
+        }
+
+        .base64-textarea[readonly] {
+            background: #f8fafc;
+        }
+
+        .image-actions, .output-actions, .input-actions, .decoded-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .decoded-image-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .error-display {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+            border-left: 4px solid #dc2626;
+        }
+
+        .success-display {
+            background: #f0fdf4;
+            color: #059669;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            font-size: 14px;
+            border-left: 4px solid #059669;
+        }
+
+        @media (max-width: 768px) {
+            .image-preview-container, .decoded-image-container {
+                flex-direction: column;
+            }
+            
+            .image-preview, .decoded-image {
+                max-width: 100%;
+                align-self: center;
+            }
+            
+            .mode-selector {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .mode-btn {
+                width: 200px;
+                justify-content: center;
+            }
+            
+            .image-actions, .output-actions, .input-actions, .decoded-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+            
+            .input-area, .output-area {
+                height: 300px;
+            }
+
+            .navbar-nav {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(255, 255, 255, 0.98);
+                backdrop-filter: blur(15px);
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+                border-radius: 0 0 15px 15px;
+                padding: 10px 20px;
+            }
+
+            .navbar-nav.active {
+                display: flex;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+            }
+
+            .navbar-brand {
+                margin-right: 20px;
+            }
+
+            .nav-link {
+                margin: 5px 0;
+                padding: 15px 10px;
+            }
+
+            .container {
+                margin-top: 10px;
+                margin-bottom: 10px;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="#" class="navbar-brand">开发者工具箱</a>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+                <span>☰</span>
+            </button>
+            <ul class="navbar-nav" id="navbarNav">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active" onclick="switchTool('json')">
+                        <span class="nav-icon">📄</span>
+                        JSON格式化
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="switchTool('image')">
+                        <span class="nav-icon">🖼️</span>
+                        图片Base64互转
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="switchTool('markdown')">
+                        <span class="nav-icon">📝</span>
+                        在线Markdown
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="switchTool('m3u8')">
+                        <span class="nav-icon">🎬</span>
+                        M3U8播放器
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="content-area">
+        <div class="container" id="jsonTool">
+        <div class="header">
+            <h1>JSON格式化工具</h1>
+            <p>专业的JSON验证、格式化和可视化工具</p>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">JSON输入</h3>
+                </div>
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="formatJson()">
+                        <span>✨</span> 格式化
+                    </button>
+                    <button class="btn btn-secondary" onclick="minifyJson()">
+                        <span>🗜️</span> 压缩
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearInput()">
+                        <span>🗑️</span> 清空
+                    </button>
+                    <button class="btn btn-secondary" onclick="loadSample()">
+                        <span>📝</span> 示例
+                    </button>
+                </div>
+                <textarea 
+                    id="jsonInput" 
+                    class="input-area" 
+                    placeholder="请输入JSON数据..."
+                    oninput="validateJson()"
+                ></textarea>
+                <div class="status-bar">
+                    <div id="inputStatus">等待输入...</div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span>字符数:</span>
+                            <span id="charCount">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>行数:</span>
+                            <span id="lineCount">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">格式化结果</h3>
+                </div>
+                <div class="controls">
+                    <div class="collapse-controls">
+                        <button class="btn btn-secondary" onclick="collapseLevel(1)">
+                            <span>📁</span> 折叠1级
+                        </button>
+                        <button class="btn btn-secondary" onclick="collapseLevel(2)">
+                            <span>📁</span> 折叠2级
+                        </button>
+                        <button class="btn btn-secondary" onclick="collapseLevel(3)">
+                            <span>📁</span> 折叠3级
+                        </button>
+                        <button class="btn btn-secondary" onclick="expandAll()">
+                            <span>📂</span> 展开全部
+                        </button>
+                    </div>
+                    <button class="btn btn-primary" onclick="copyOutput()">
+                        <span>📋</span> 复制
+                    </button>
+                </div>
+                <div id="jsonOutput" class="output-area"></div>
+                <div class="status-bar">
+                    <div id="outputStatus">等待格式化...</div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span>对象数:</span>
+                            <span id="objectCount">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>数组数:</span>
+                            <span id="arrayCount">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>深度:</span>
+                            <span id="maxDepth">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图片Base64互转工具 -->
+        <div class="container" id="imageTool" style="display: none;">
+            <div class="header">
+                <h1>图片Base64互转工具</h1>
+                <p>支持多种图片格式与Base64编码的相互转换</p>
+            </div>
+
+            <!-- 转换模式选择 -->
+            <div class="mode-selector">
+                <button class="mode-btn active" onclick="switchMode('toBase64')" data-mode="toBase64">
+                    <span>📤</span> 图片转Base64
+                </button>
+                <button class="mode-btn" onclick="switchMode('toImage')" data-mode="toImage">
+                    <span>📥</span> Base64转图片
+                </button>
+            </div>
+
+            <!-- 图片转Base64模式 -->
+            <div id="toBase64Mode" class="conversion-mode">
+                <div class="upload-section">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">📁</div>
+                            <h3>拖拽图片到此处或点击选择</h3>
+                            <p>支持 JPG、PNG、GIF、WebP、SVG 格式</p>
+                            <p>最大文件大小：10MB</p>
+                            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                            <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                                选择图片
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="image-preview-section" id="imagePreviewSection" style="display: none;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">图片预览</h3>
+                            <div class="image-actions">
+                                <button class="btn btn-secondary" onclick="clearImage()">
+                                    <span>🗑️</span> 清除
+                                </button>
+                            </div>
+                        </div>
+                        <div class="image-preview-container">
+                            <img id="imagePreview" class="image-preview" alt="预览图片">
+                            <div class="image-info">
+                                <div class="info-item">
+                                    <span class="info-label">文件名:</span>
+                                    <span id="fileName">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">文件大小:</span>
+                                    <span id="fileSize">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">图片尺寸:</span>
+                                    <span id="imageDimensions">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">文件类型:</span>
+                                    <span id="fileType">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="base64-output-section" id="base64OutputSection" style="display: none;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Base64编码结果</h3>
+                            <div class="output-actions">
+                                <button class="btn btn-secondary" onclick="toggleDataURL()">
+                                    <span id="dataURLToggleIcon">🔗</span>
+                                    <span id="dataURLToggleText">显示Data URL</span>
+                                </button>
+                                <button class="btn btn-primary" onclick="copyBase64()">
+                                    <span>📋</span> 复制
+                                </button>
+                                <button class="btn btn-secondary" onclick="downloadBase64()">
+                                    <span>💾</span> 保存
+                                </button>
+                            </div>
+                        </div>
+                        <div class="base64-container">
+                            <textarea id="base64Output" class="base64-textarea" readonly placeholder="Base64编码将在此显示..."></textarea>
+                        </div>
+                        <div class="status-bar">
+                            <div class="stats">
+                                <div class="stat-item">
+                                    <span>编码长度:</span>
+                                    <span id="base64Length">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>压缩比:</span>
+                                    <span id="compressionRatio">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Base64转图片模式 -->
+            <div id="toImageMode" class="conversion-mode" style="display: none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Base64编码输入</h3>
+                        <div class="input-actions">
+                            <button class="btn btn-secondary" onclick="clearBase64Input()">
+                                <span>🗑️</span> 清空
+                            </button>
+                            <button class="btn btn-secondary" onclick="pasteBase64()">
+                                <span>📋</span> 粘贴
+                            </button>
+                            <button class="btn btn-primary" onclick="decodeBase64()">
+                                <span>🔄</span> 解码
+                            </button>
+                        </div>
+                    </div>
+                    <div class="base64-input-container">
+                        <textarea id="base64Input" class="base64-textarea" placeholder="请输入Base64编码...&#10;支持带有 data:image/... 前缀的完整Data URL，也支持纯Base64编码"></textarea>
+                    </div>
+                    <div class="status-bar">
+                        <div id="base64InputStatus">等待输入...</div>
+                        <div class="stats">
+                            <div class="stat-item">
+                                <span>输入长度:</span>
+                                <span id="base64InputLength">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="decoded-image-section" id="decodedImageSection" style="display: none;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">解码结果</h3>
+                            <div class="decoded-actions">
+                                <button class="btn btn-primary" onclick="downloadDecodedImage()">
+                                    <span>💾</span> 下载图片
+                                </button>
+                                <button class="btn btn-secondary" onclick="copyDecodedImage()">
+                                    <span>📋</span> 复制图片
+                                </button>
+                            </div>
+                        </div>
+                        <div class="decoded-image-container">
+                            <img id="decodedImage" class="decoded-image" alt="解码后的图片">
+                            <div class="decoded-info">
+                                <div class="info-item">
+                                    <span class="info-label">图片尺寸:</span>
+                                    <span id="decodedDimensions">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">预计大小:</span>
+                                    <span id="decodedSize">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">图片格式:</span>
+                                    <span id="decodedFormat">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="markdownTool" style="display: none;">
+            <div class="header">
+                <h1>在线Markdown编辑器</h1>
+                <p>实时预览的Markdown编辑器</p>
+            </div>
+            <div style="text-align: center; padding: 100px 0; color: #718096;">
+                <div style="font-size: 4em; margin-bottom: 20px;">📝</div>
+                <h3>在线Markdown编辑器</h3>
+                <p>此功能正在开发中，敬请期待...</p>
+            </div>
+        </div>
+
+        <div class="container" id="m3u8Tool" style="display: none;">
+            <div class="header">
+                <h1>M3U8播放器</h1>
+                <p>在线M3U8视频流播放器</p>
+            </div>
+            <div style="text-align: center; padding: 100px 0; color: #718096;">
+                <div style="font-size: 4em; margin-bottom: 20px;">🎬</div>
+                <h3>M3U8播放器</h3>
+                <p>此功能正在开发中，敬请期待...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let jsonData = null;
+        let collapsedLevels = new Set();
+
+        function validateJson() {
+            const input = document.getElementById('jsonInput');
+            const status = document.getElementById('inputStatus');
+            const charCount = document.getElementById('charCount');
+            const lineCount = document.getElementById('lineCount');
+            
+            const text = input.value;
+            charCount.textContent = text.length;
+            lineCount.textContent = text.split('\n').length;
+            
+            if (!text.trim()) {
+                status.textContent = '等待输入...';
+                status.className = '';
+                return;
+            }
+            
+            try {
+                JSON.parse(text);
+                status.textContent = '✅ JSON格式有效';
+                status.className = 'status-valid';
+            } catch (e) {
+                status.textContent = `❌ JSON格式错误: ${e.message}`;
+                status.className = 'status-invalid';
+            }
+        }
+
+        function formatJson() {
+            const input = document.getElementById('jsonInput').value;
+            const output = document.getElementById('jsonOutput');
+            const outputStatus = document.getElementById('outputStatus');
+            
+            if (!input.trim()) {
+                outputStatus.textContent = '请输入JSON数据';
+                outputStatus.className = 'status-invalid';
+                return;
+            }
+            
+            try {
+                jsonData = JSON.parse(input);
+                const formatted = renderJsonWithCollapse(jsonData, 0);
+                output.innerHTML = formatted;
+                outputStatus.textContent = '✅ 格式化成功';
+                outputStatus.className = 'status-valid';
+                updateStats(jsonData);
+            } catch (e) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = `解析错误: ${e.message}`;
+                output.innerHTML = '';
+                output.appendChild(errorDiv);
+                outputStatus.textContent = '❌ 格式化失败';
+                outputStatus.className = 'status-invalid';
+            }
+        }
+
+        function minifyJson() {
+            const input = document.getElementById('jsonInput').value;
+            const inputElement = document.getElementById('jsonInput');
+            
+            if (!input.trim()) return;
+            
+            try {
+                const parsed = JSON.parse(input);
+                const minified = JSON.stringify(parsed);
+                inputElement.value = minified;
+                validateJson();
+            } catch (e) {
+                alert('JSON格式错误，无法压缩');
+            }
+        }
+
+        function clearInput() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('jsonOutput').innerHTML = '';
+            document.getElementById('inputStatus').textContent = '等待输入...';
+            document.getElementById('inputStatus').className = '';
+            document.getElementById('outputStatus').textContent = '等待格式化...';
+            document.getElementById('outputStatus').className = '';
+            document.getElementById('charCount').textContent = '0';
+            document.getElementById('lineCount').textContent = '0';
+            resetStats();
+        }
+
+        function loadSample() {
+            const sample = {
+                "name": "张三",
+                "age": 28,
+                "email": "zhangsan@example.com",
+                "address": {
+                    "country": "中国",
+                    "city": "北京",
+                    "street": "中关村大街1号",
+                    "zipCode": "100000"
+                },
+                "hobbies": ["读书", "游泳", "编程"],
+                "education": {
+                    "university": "清华大学",
+                    "major": "计算机科学",
+                    "degree": "硕士",
+                    "graduationYear": 2020
+                },
+                "skills": [
+                    {"name": "JavaScript", "level": "高级"},
+                    {"name": "Python", "level": "中级"},
+                    {"name": "Java", "level": "高级"}
+                ],
+                "isActive": true,
+                "lastLogin": null
+            };
+            
+            document.getElementById('jsonInput').value = JSON.stringify(sample, null, 2);
+            validateJson();
+        }
+
+        function renderJsonWithCollapse(obj, level, path = '') {
+            if (obj === null) {
+                return '<span class="json-null">null</span>';
+            }
+            
+            if (typeof obj === 'string') {
+                return `<span class="json-string">"${escapeHtml(obj)}"</span>`;
+            }
+            
+            if (typeof obj === 'number') {
+                return `<span class="json-number">${obj}</span>`;
+            }
+            
+            if (typeof obj === 'boolean') {
+                return `<span class="json-boolean">${obj}</span>`;
+            }
+            
+            if (Array.isArray(obj)) {
+                if (obj.length === 0) {
+                    return '<span class="json-bracket">[]</span>';
+                }
+                
+                const collapseId = `collapse-${path}-${level}`;
+                const isCollapsed = collapsedLevels.has(collapseId);
+                
+                let result = `<button class="collapse-btn" onclick="toggleCollapse('${collapseId}')">${isCollapsed ? '+' : '-'}</button>`;
+                result += '<span class="json-bracket">[</span>';
+                
+                if (isCollapsed) {
+                    result += `<span class="json-comment"> ... ${obj.length} items</span>`;
+                } else {
+                    result += `<div id="${collapseId}" class="${isCollapsed ? 'collapsed' : ''}">`;
+                    for (let i = 0; i < obj.length; i++) {
+                        const itemPath = `${path}[${i}]`;
+                        result += '<div class="json-line" style="margin-left: 20px;">';
+                        result += renderJsonWithCollapse(obj[i], level + 1, itemPath);
+                        if (i < obj.length - 1) result += ',';
+                        result += '</div>';
+                    }
+                    result += '</div>';
+                }
+                
+                result += '<span class="json-bracket">]</span>';
+                return result;
+            }
+            
+            if (typeof obj === 'object') {
+                const keys = Object.keys(obj);
+                if (keys.length === 0) {
+                    return '<span class="json-bracket">{}</span>';
+                }
+                
+                const collapseId = `collapse-${path}-${level}`;
+                const isCollapsed = collapsedLevels.has(collapseId);
+                
+                let result = `<button class="collapse-btn" onclick="toggleCollapse('${collapseId}')">${isCollapsed ? '+' : '-'}</button>`;
+                result += '<span class="json-bracket">{</span>';
+                
+                if (isCollapsed) {
+                    result += `<span class="json-comment"> ... ${keys.length} properties</span>`;
+                } else {
+                    result += `<div id="${collapseId}" class="${isCollapsed ? 'collapsed' : ''}">`;
+                    for (let i = 0; i < keys.length; i++) {
+                        const key = keys[i];
+                        const itemPath = `${path}.${key}`;
+                        result += '<div class="json-line" style="margin-left: 20px;">';
+                        result += `<span class="json-key">"${escapeHtml(key)}"</span>: `;
+                        result += renderJsonWithCollapse(obj[key], level + 1, itemPath);
+                        if (i < keys.length - 1) result += ',';
+                        result += '</div>';
+                    }
+                    result += '</div>';
+                }
+                
+                result += '<span class="json-bracket">}</span>';
+                return result;
+            }
+            
+            return String(obj);
+        }
+
+        function toggleCollapse(collapseId) {
+            const element = document.getElementById(collapseId);
+            const button = element.previousElementSibling;
+            
+            if (collapsedLevels.has(collapseId)) {
+                collapsedLevels.delete(collapseId);
+                element.classList.remove('collapsed');
+                button.textContent = '-';
+            } else {
+                collapsedLevels.add(collapseId);
+                element.classList.add('collapsed');
+                button.textContent = '+';
+            }
+        }
+
+        function collapseLevel(targetLevel) {
+            if (!jsonData) return;
+            
+            collapsedLevels.clear();
+            addCollapseAtLevel(jsonData, 0, targetLevel, '');
+            formatJson();
+        }
+
+        function addCollapseAtLevel(obj, currentLevel, targetLevel, path) {
+            if (currentLevel >= targetLevel) {
+                const collapseId = `collapse-${path}-${currentLevel}`;
+                collapsedLevels.add(collapseId);
+                return;
+            }
+            
+            if (Array.isArray(obj)) {
+                for (let i = 0; i < obj.length; i++) {
+                    const itemPath = `${path}[${i}]`;
+                    addCollapseAtLevel(obj[i], currentLevel + 1, targetLevel, itemPath);
+                }
+            } else if (typeof obj === 'object' && obj !== null) {
+                const keys = Object.keys(obj);
+                for (const key of keys) {
+                    const itemPath = `${path}.${key}`;
+                    addCollapseAtLevel(obj[key], currentLevel + 1, targetLevel, itemPath);
+                }
+            }
+        }
+
+        function expandAll() {
+            collapsedLevels.clear();
+            formatJson();
+        }
+
+        function copyOutput() {
+            if (!jsonData) return;
+            
+            const formatted = JSON.stringify(jsonData, null, 2);
+            navigator.clipboard.writeText(formatted).then(() => {
+                const button = event.target.closest('.btn');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<span>✅</span> 已复制';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
+        function updateStats(obj) {
+            const stats = analyzeJson(obj);
+            document.getElementById('objectCount').textContent = stats.objects;
+            document.getElementById('arrayCount').textContent = stats.arrays;
+            document.getElementById('maxDepth').textContent = stats.maxDepth;
+        }
+
+        function analyzeJson(obj, depth = 0) {
+            let stats = {
+                objects: 0,
+                arrays: 0,
+                maxDepth: depth
+            };
+            
+            if (Array.isArray(obj)) {
+                stats.arrays++;
+                for (const item of obj) {
+                    const itemStats = analyzeJson(item, depth + 1);
+                    stats.objects += itemStats.objects;
+                    stats.arrays += itemStats.arrays;
+                    stats.maxDepth = Math.max(stats.maxDepth, itemStats.maxDepth);
+                }
+            } else if (typeof obj === 'object' && obj !== null) {
+                stats.objects++;
+                for (const key in obj) {
+                    const itemStats = analyzeJson(obj[key], depth + 1);
+                    stats.objects += itemStats.objects;
+                    stats.arrays += itemStats.arrays;
+                    stats.maxDepth = Math.max(stats.maxDepth, itemStats.maxDepth);
+                }
+            }
+            
+            return stats;
+        }
+
+        function resetStats() {
+            document.getElementById('objectCount').textContent = '0';
+            document.getElementById('arrayCount').textContent = '0';
+            document.getElementById('maxDepth').textContent = '0';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            validateJson();
+        });
+
+        // 导航功能
+        function switchTool(toolName) {
+            // 隐藏所有工具
+            const tools = ['json', 'image', 'markdown', 'm3u8'];
+            tools.forEach(tool => {
+                const element = document.getElementById(tool + 'Tool');
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+            
+            // 显示选中的工具
+            const selectedTool = document.getElementById(toolName + 'Tool');
+            if (selectedTool) {
+                selectedTool.style.display = 'block';
+            }
+            
+            // 更新导航状态
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // 添加活动状态到当前链接
+            event.target.closest('.nav-link').classList.add('active');
+            
+            // 移动端关闭菜单
+            const navbarNav = document.getElementById('navbarNav');
+            navbarNav.classList.remove('active');
+        }
+
+        function toggleMobileMenu() {
+            const navbarNav = document.getElementById('navbarNav');
+            navbarNav.classList.toggle('active');
+        }
+
+        // 点击页面其他地方关闭移动菜单
+        document.addEventListener('click', function(event) {
+            const navbar = document.querySelector('.navbar');
+            const navbarNav = document.getElementById('navbarNav');
+            const toggleButton = document.querySelector('.mobile-menu-toggle');
+            
+            if (!navbar.contains(event.target) && navbarNav.classList.contains('active')) {
+                navbarNav.classList.remove('active');
+            }
+        });
+
+        // 图片Base64互转工具功能
+        let currentMode = 'toBase64';
+        let currentImage = null;
+        let showDataURL = false;
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+            
+            // 显示/隐藏相应模式
+            document.getElementById('toBase64Mode').style.display = mode === 'toBase64' ? 'block' : 'none';
+            document.getElementById('toImageMode').style.display = mode === 'toImage' ? 'block' : 'none';
+            
+            // 重置状态
+            if (mode === 'toBase64') {
+                clearImage();
+            } else {
+                clearBase64Input();
+            }
+        }
+
+        // 图片上传处理
+        function initImageUpload() {
+            const fileInput = document.getElementById('fileInput');
+            const uploadArea = document.getElementById('uploadArea');
+            
+            fileInput.addEventListener('change', handleFileSelect);
+            
+            // 拖拽功能
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            uploadArea.addEventListener('click', () => fileInput.click());
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                processImageFile(file);
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                processImageFile(files[0]);
+            }
+        }
+
+        function processImageFile(file) {
+            // 验证文件类型
+            if (!file.type.startsWith('image/')) {
+                showError('请选择图片文件');
+                return;
+            }
+            
+            // 验证文件大小 (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showError('文件大小不能超过10MB');
+                return;
+            }
+            
+            currentImage = file;
+            
+            // 显示文件信息
+            updateFileInfo(file);
+            
+            // 读取并显示图片
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                displayImage(e.target.result, file);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateFileInfo(file) {
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('fileType').textContent = file.type;
+        }
+
+        function displayImage(dataUrl, file) {
+            const preview = document.getElementById('imagePreview');
+            preview.src = dataUrl;
+            preview.onload = function() {
+                document.getElementById('imageDimensions').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
+                document.getElementById('imagePreviewSection').style.display = 'block';
+                generateBase64(dataUrl, file);
+            };
+        }
+
+        function generateBase64(dataUrl, file) {
+            const base64Data = showDataURL ? dataUrl : dataUrl.split(',')[1];
+            const output = document.getElementById('base64Output');
+            output.value = base64Data;
+            
+            // 更新统计信息
+            document.getElementById('base64Length').textContent = base64Data.length.toLocaleString();
+            
+            const compressionRatio = ((file.size / base64Data.length) * 100).toFixed(1);
+            document.getElementById('compressionRatio').textContent = compressionRatio + '%';
+            
+            document.getElementById('base64OutputSection').style.display = 'block';
+        }
+
+        function toggleDataURL() {
+            if (!currentImage) return;
+            
+            showDataURL = !showDataURL;
+            const toggleIcon = document.getElementById('dataURLToggleIcon');
+            const toggleText = document.getElementById('dataURLToggleText');
+            
+            if (showDataURL) {
+                toggleIcon.textContent = '🔗';
+                toggleText.textContent = '仅显示Base64';
+            } else {
+                toggleIcon.textContent = '📄';
+                toggleText.textContent = '显示Data URL';
+            }
+            
+            // 重新生成Base64
+            const preview = document.getElementById('imagePreview');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                generateBase64(e.target.result, currentImage);
+            };
+            reader.readAsDataURL(currentImage);
+        }
+
+        function copyBase64() {
+            const output = document.getElementById('base64Output');
+            output.select();
+            document.execCommand('copy');
+            showSuccess('Base64编码已复制到剪贴板');
+        }
+
+        function downloadBase64() {
+            const output = document.getElementById('base64Output');
+            const content = output.value;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'base64-encoded.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function clearImage() {
+            currentImage = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('imagePreviewSection').style.display = 'none';
+            document.getElementById('base64OutputSection').style.display = 'none';
+            document.getElementById('base64Output').value = '';
+            showDataURL = false;
+            
+            // 重置切换按钮状态
+            document.getElementById('dataURLToggleIcon').textContent = '🔗';
+            document.getElementById('dataURLToggleText').textContent = '显示Data URL';
+        }
+
+        // Base64转图片功能
+        function decodeBase64() {
+            const input = document.getElementById('base64Input').value.trim();
+            if (!input) {
+                showError('请输入Base64编码');
+                return;
+            }
+            
+            try {
+                let base64Data = input;
+                let mimeType = 'image/png'; // 默认类型
+                
+                // 检查是否是Data URL格式
+                if (input.startsWith('data:')) {
+                    const matches = input.match(/^data:([^;]+);base64,(.+)$/);
+                    if (matches) {
+                        mimeType = matches[1];
+                        base64Data = matches[2];
+                    } else {
+                        throw new Error('无效的Data URL格式');
+                    }
+                }
+                
+                // 验证Base64格式
+                if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
+                    throw new Error('无效的Base64编码');
+                }
+                
+                // 创建图片
+                const dataUrl = `data:${mimeType};base64,${base64Data}`;
+                const img = document.getElementById('decodedImage');
+                
+                img.onload = function() {
+                    document.getElementById('decodedDimensions').textContent = `${this.naturalWidth} × ${this.naturalHeight}`;
+                    document.getElementById('decodedFormat').textContent = mimeType;
+                    
+                    // 计算预计文件大小
+                    const estimatedSize = (base64Data.length * 0.75);
+                    document.getElementById('decodedSize').textContent = formatFileSize(estimatedSize);
+                    
+                    document.getElementById('decodedImageSection').style.display = 'block';
+                    updateBase64InputStatus('✅ 解码成功', 'status-valid');
+                };
+                
+                img.onerror = function() {
+                    throw new Error('无法解码图片，请检查Base64编码是否正确');
+                };
+                
+                img.src = dataUrl;
+                
+            } catch (error) {
+                showError('解码失败: ' + error.message);
+                updateBase64InputStatus('❌ 解码失败', 'status-invalid');
+            }
+        }
+
+        function pasteBase64() {
+            navigator.clipboard.readText().then(text => {
+                document.getElementById('base64Input').value = text;
+                updateBase64InputLength();
+            }).catch(err => {
+                showError('无法访问剪贴板');
+            });
+        }
+
+        function clearBase64Input() {
+            document.getElementById('base64Input').value = '';
+            document.getElementById('decodedImageSection').style.display = 'none';
+            updateBase64InputLength();
+            updateBase64InputStatus('等待输入...', '');
+        }
+
+        function downloadDecodedImage() {
+            const img = document.getElementById('decodedImage');
+            if (!img.src) return;
+            
+            const a = document.createElement('a');
+            a.href = img.src;
+            a.download = 'decoded-image.png';
+            a.click();
+        }
+
+        function copyDecodedImage() {
+            const img = document.getElementById('decodedImage');
+            if (!img.src) return;
+            
+            // 创建canvas来复制图片
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            ctx.drawImage(img, 0, 0);
+            
+            canvas.toBlob(blob => {
+                const item = new ClipboardItem({'image/png': blob});
+                navigator.clipboard.write([item]).then(() => {
+                    showSuccess('图片已复制到剪贴板');
+                }).catch(err => {
+                    showError('复制失败，请手动右键保存图片');
+                });
+            });
+        }
+
+        function updateBase64InputLength() {
+            const input = document.getElementById('base64Input');
+            const length = input.value.length;
+            document.getElementById('base64InputLength').textContent = length.toLocaleString();
+        }
+
+        function updateBase64InputStatus(message, className) {
+            const status = document.getElementById('base64InputStatus');
+            status.textContent = message;
+            status.className = className;
+        }
+
+        // 工具函数
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showError(message) {
+            // 创建错误提示
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-display';
+            errorDiv.textContent = message;
+            
+            // 添加到当前模式的容器中
+            const container = currentMode === 'toBase64' ? 
+                document.getElementById('toBase64Mode') : 
+                document.getElementById('toImageMode');
+            container.appendChild(errorDiv);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 3000);
+        }
+
+        function showSuccess(message) {
+            // 创建成功提示
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-display';
+            successDiv.textContent = message;
+            
+            // 添加到当前模式的容器中
+            const container = currentMode === 'toBase64' ? 
+                document.getElementById('toBase64Mode') : 
+                document.getElementById('toImageMode');
+            container.appendChild(successDiv);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                if (successDiv.parentNode) {
+                    successDiv.parentNode.removeChild(successDiv);
+                }
+            }, 3000);
+        }
+
+        // Base64输入监听
+        document.addEventListener('DOMContentLoaded', function() {
+            const base64Input = document.getElementById('base64Input');
+            if (base64Input) {
+                base64Input.addEventListener('input', updateBase64InputLength);
+                initImageUpload();
+            }
+        });
+    </script>
+</body>
+</html>
