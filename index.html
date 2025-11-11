@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>在线开发者工具集 - JSON格式化、图片Base64转换、Markdown编辑器、M3U8播放器</title>
-    <meta name="description" content="免费在线开发者工具集，包含JSON格式化验证、图片Base64编码转换、Markdown实时编辑预览、M3U8视频播放器等实用工具，提升开发效率。">
-    <meta name="keywords" content="JSON格式化,JSON验证,Base64编码,图片转换,Markdown编辑器,M3U8播放器,开发者工具,在线工具">
+    <title>在线开发者工具集 - JSON格式化、图片Base64转换、音频Base64转换、Markdown编辑器、M3U8播放器</title>
+    <meta name="description" content="免费在线开发者工具集，包含JSON格式化验证、图片Base64编码转换、音频Base64编码转换、Markdown实时编辑预览、M3U8视频播放器等实用工具，提升开发效率。">
+    <meta name="keywords" content="JSON格式化,JSON验证,Base64编码,图片转换,音频转换,音频Base64,Markdown编辑器,M3U8播放器,开发者工具,在线工具">
     <meta name="author" content="Developer Tools">
     <meta name="robots" content="index, follow">
     <meta property="og:title" content="在线开发者工具集 - JSON、Base64、Markdown、M3U8工具">
@@ -49,6 +49,12 @@
                     <a href="#" class="nav-link" onclick="switchTool('m3u8')">
                         <span class="nav-icon">🎬</span>
                         M3U8播放器
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="switchTool('audio')">
+                        <span class="nav-icon">🎵</span>
+                        音频Base64
                     </a>
                 </li>
             </ul>
@@ -587,6 +593,206 @@
                             <li>建议使用现代浏览器以获得最佳体验</li>
                         </ul>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 音频Base64互转工具 -->
+        <div class="container" id="audioTool" style="display: none;">
+            <div class="header">
+                <h1>音频Base64互转工具</h1>
+                <p>支持多种音频格式与Base64编码的相互转换和在线播放</p>
+            </div>
+
+            <!-- 转换模式选择 -->
+            <div class="mode-selector">
+                <button class="mode-btn active" onclick="switchAudioMode('toBase64')" data-mode="toBase64">
+                    <span>📤</span> 音频转Base64
+                </button>
+                <button class="mode-btn" onclick="switchAudioMode('toAudio')" data-mode="toAudio">
+                    <span>📥</span> Base64转音频
+                </button>
+            </div>
+
+            <!-- 音频转Base64模式 -->
+            <div id="audioToBase64Mode" class="conversion-mode">
+                <div class="upload-section">
+                    <div class="upload-area" id="audioUploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">🎵</div>
+                            <h3>拖拽音频文件到此处或点击选择</h3>
+                            <p>支持 MP3、WAV、OGG、M4A、AAC 等格式</p>
+                            <p>最大文件大小：20MB</p>
+                            <input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
+                            <button class="btn btn-primary" onclick="document.getElementById('audioFileInput').click()">
+                                选择音频
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="audio-preview-section" id="audioPreviewSection" style="display: none;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">音频预览</h3>
+                            <div class="audio-actions">
+                                <button class="btn btn-secondary" onclick="clearAudio()">
+                                    <span>🗑️</span> 清除
+                                </button>
+                            </div>
+                        </div>
+                        <div class="audio-preview-container">
+                            <audio id="audioPreview" class="audio-player" controls></audio>
+                            <div class="audio-info">
+                                <div class="info-item">
+                                    <span class="info-label">文件名:</span>
+                                    <span id="audioFileName">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">文件大小:</span>
+                                    <span id="audioFileSize">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">文件类型:</span>
+                                    <span id="audioFileType">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">音频时长:</span>
+                                    <span id="audioDuration">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="base64-output-section" id="audioBase64OutputSection" style="display: none;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Base64编码结果</h3>
+                            <div class="output-actions">
+                                <button class="btn btn-secondary" onclick="toggleAudioDataURL()">
+                                    <span id="audioDataURLToggleIcon">🔗</span>
+                                    <span id="audioDataURLToggleText">显示Data URL</span>
+                                </button>
+                                <button class="btn btn-primary" onclick="copyAudioBase64()">
+                                    <span>📋</span> 复制
+                                </button>
+                                <button class="btn btn-secondary" onclick="downloadAudioBase64()">
+                                    <span>💾</span> 保存
+                                </button>
+                            </div>
+                        </div>
+                        <div class="base64-container">
+                            <textarea id="audioBase64Output" class="base64-textarea" readonly placeholder="Base64编码将在此显示..."></textarea>
+                        </div>
+                        <div class="status-bar">
+                            <div class="stats">
+                                <div class="stat-item">
+                                    <span>编码长度:</span>
+                                    <span id="audioBase64Length">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span>压缩比:</span>
+                                    <span id="audioCompressionRatio">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Base64转音频模式 -->
+            <div id="audioToAudioMode" class="conversion-mode" style="display: none;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Base64输入</h3>
+                        <div class="input-actions">
+                            <button class="btn btn-secondary" onclick="pasteAudioBase64()">
+                                <span>📋</span> 粘贴
+                            </button>
+                            <button class="btn btn-secondary" onclick="clearAudioBase64Input()">
+                                <span>🗑️</span> 清空
+                            </button>
+                            <button class="btn btn-primary" onclick="decodeAudioBase64()">
+                                <span>🔄</span> 解码
+                            </button>
+                        </div>
+                    </div>
+                    <div class="base64-input-container">
+                        <textarea 
+                            id="audioBase64Input" 
+                            class="base64-textarea" 
+                            placeholder="请输入音频Base64编码或Data URL..."
+                            oninput="updateAudioBase64InputLength()"
+                        ></textarea>
+                    </div>
+                    <div class="status-bar">
+                        <div id="audioBase64InputStatus">等待输入...</div>
+                        <div class="stats">
+                            <div class="stat-item">
+                                <span>字符数:</span>
+                                <span id="audioBase64InputLength">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="decoded-audio-section" id="decodedAudioSection" style="display: none;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">解码结果</h3>
+                            <div class="decoded-actions">
+                                <button class="btn btn-primary" onclick="downloadDecodedAudio()">
+                                    <span>💾</span> 下载
+                                </button>
+                                <button class="btn btn-secondary" onclick="playDecodedAudio()">
+                                    <span>▶️</span> 播放
+                                </button>
+                            </div>
+                        </div>
+                        <div class="decoded-audio-container">
+                            <audio id="decodedAudio" class="audio-player" controls></audio>
+                            <div class="decoded-info">
+                                <div class="info-item">
+                                    <span class="info-label">文件格式:</span>
+                                    <span id="decodedAudioFormat">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">预计大小:</span>
+                                    <span id="decodedAudioSize">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">音频时长:</span>
+                                    <span id="decodedAudioDuration">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-description">
+                <div class="description-panel">
+                    <h3>🎵 支持格式</h3>
+                    <ul>
+                        <li><strong>音频格式</strong>：MP3、WAV、OGG、M4A、AAC、FLAC等主流格式</li>
+                        <li><strong>文件大小</strong>：支持最大20MB的音频文件</li>
+                        <li><strong>输出格式</strong>：纯Base64编码或完整Data URL</li>
+                        <li><strong>拖拽上传</strong>：支持直接拖拽音频到上传区域</li>
+                        <li><strong>实时播放</strong>：上传后立即可以播放预览</li>
+                        <li><strong>批量处理</strong>：可连续转换多个音频文件</li>
+                    </ul>
+                </div>
+                <div class="description-panel">
+                    <h3>💡 应用场景</h3>
+                    <ul>
+                        <li><strong>网页开发</strong>：将音效转为Base64嵌入HTML</li>
+                        <li><strong>移动应用</strong>：减少HTTP请求，提升加载速度</li>
+                        <li><strong>数据传输</strong>：通过文本方式传输音频数据</li>
+                        <li><strong>离线应用</strong>：无需外部音频资源的应用</li>
+                        <li><strong>API接口</strong>：在JSON中传输音频数据</li>
+                        <li><strong>语音消息</strong>：在聊天应用中传输语音</li>
+                    </ul>
                 </div>
             </div>
         </div>

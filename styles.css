@@ -960,3 +960,54 @@ body {
         padding: 20px;
     }
 }
+
+
+/* 音频Base64互转工具样式 */
+.audio-preview-section, .audio-base64-output-section, .decoded-audio-section {
+    margin-bottom: 30px;
+}
+
+.audio-preview-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.audio-player {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 10px;
+    outline: none;
+}
+
+.audio-info {
+    width: 100%;
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.decoded-audio-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.audio-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .audio-preview-container, .decoded-audio-container {
+        flex-direction: column;
+    }
+    
+    .audio-player {
+        max-width: 100%;
+    }
+}

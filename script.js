@@ -1265,6 +1265,7 @@ function switchTool(tool) {
     document.getElementById('imageTool').style.display = 'none';
     document.getElementById('markdownTool').style.display = 'none';
     document.getElementById('m3u8Tool').style.display = 'none';
+    document.getElementById('audioTool').style.display = 'none';
     
     // 移除所有导航链接的active类
     document.querySelectorAll('.nav-link').forEach(link => {
@@ -1288,6 +1289,10 @@ function switchTool(tool) {
         case 'm3u8':
             document.getElementById('m3u8Tool').style.display = 'block';
             document.querySelector('[onclick="switchTool(\'m3u8\')"]').classList.add('active');
+            break;
+        case 'audio':
+            document.getElementById('audioTool').style.display = 'block';
+            document.querySelector('[onclick="switchTool(\'audio\')"]').classList.add('active');
             break;
     }
 }
@@ -1465,6 +1470,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initImageUpload();
     initMarkdownEditor();
     initM3U8Player();
+    initAudioUpload();
     
     // 点击页面其他地方关闭移动菜单
     document.addEventListener('click', function(event) {
@@ -1504,3 +1510,367 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// 
+==================== 音频Base64互转工具功能 ====================
+let currentAudioMode = 'toBase64';
+let currentAudioFile = null;
+let showAudioDataURL = false;
+
+function switchAudioMode(mode) {
+    currentAudioMode = mode;
+    
+    // 更新按钮状态
+    document.querySelectorAll('#audioTool .mode-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`#audioTool [data-mode="${mode}"]`).classList.add('active');
+    
+    // 显示/隐藏相应模式
+    document.getElementById('audioToBase64Mode').style.display = mode === 'toBase64' ? 'block' : 'none';
+    document.getElementById('audioToAudioMode').style.display = mode === 'toAudio' ? 'block' : 'none';
+    
+    // 重置状态
+    if (mode === 'toBase64') {
+        clearAudio();
+    } else {
+        clearAudioBase64Input();
+    }
+}
+
+// 音频上传处理
+function initAudioUpload() {
+    const fileInput = document.getElementById('audioFileInput');
+    const uploadArea = document.getElementById('audioUploadArea');
+    
+    if (fileInput && uploadArea) {
+        fileInput.addEventListener('change', handleAudioFileSelect);
+        
+        // 拖拽功能
+        uploadArea.addEventListener('dragover', handleAudioDragOver);
+        uploadArea.addEventListener('dragleave', handleAudioDragLeave);
+        uploadArea.addEventListener('drop', handleAudioDrop);
+        uploadArea.addEventListener('click', () => fileInput.click());
+    }
+}
+
+function handleAudioFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        processAudioFile(file);
+    }
+}
+
+function handleAudioDragOver(event) {
+    event.preventDefault();
+    event.currentTarget.classList.add('dragover');
+}
+
+function handleAudioDragLeave(event) {
+    event.currentTarget.classList.remove('dragover');
+}
+
+function handleAudioDrop(event) {
+    event.preventDefault();
+    event.currentTarget.classList.remove('dragover');
+    
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        processAudioFile(files[0]);
+    }
+}
+
+function processAudioFile(file) {
+    // 验证文件类型
+    if (!file.type.startsWith('audio/')) {
+        showAudioError('请选择音频文件');
+        return;
+    }
+    
+    // 验证文件大小 (20MB)
+    if (file.size > 20 * 1024 * 1024) {
+        showAudioError('文件大小不能超过20MB');
+        return;
+    }
+    
+    currentAudioFile = file;
+    
+    // 显示文件信息
+    updateAudioFileInfo(file);
+    
+    // 读取并显示音频
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        displayAudio(e.target.result, file);
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateAudioFileInfo(file) {
+    document.getElementById('audioFileName').textContent = file.name;
+    document.getElementById('audioFileSize').textContent = formatFileSize(file.size);
+    document.getElementById('audioFileType').textContent = file.type;
+}
+
+function displayAudio(dataUrl, file) {
+    const preview = document.getElementById('audioPreview');
+    preview.src = dataUrl;
+    
+    preview.onloadedmetadata = function() {
+        const duration = preview.duration;
+        const minutes = Math.floor(duration / 60);
+        const seconds = Math.floor(duration % 60);
+        document.getElementById('audioDuration').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        
+        document.getElementById('audioPreviewSection').style.display = 'block';
+        generateAudioBase64(dataUrl, file);
+    };
+}
+
+function generateAudioBase64(dataUrl, file) {
+    const base64Data = showAudioDataURL ? dataUrl : dataUrl.split(',')[1];
+    const output = document.getElementById('audioBase64Output');
+    output.value = base64Data;
+    
+    // 更新统计信息
+    document.getElementById('audioBase64Length').textContent = base64Data.length.toLocaleString();
+    
+    const compressionRatio = ((file.size / base64Data.length) * 100).toFixed(1);
+    document.getElementById('audioCompressionRatio').textContent = compressionRatio + '%';
+    
+    document.getElementById('audioBase64OutputSection').style.display = 'block';
+}
+
+function toggleAudioDataURL() {
+    if (!currentAudioFile) return;
+    
+    showAudioDataURL = !showAudioDataURL;
+    const toggleIcon = document.getElementById('audioDataURLToggleIcon');
+    const toggleText = document.getElementById('audioDataURLToggleText');
+    
+    if (showAudioDataURL) {
+        toggleIcon.textContent = '🔗';
+        toggleText.textContent = '仅显示Base64';
+    } else {
+        toggleIcon.textContent = '📄';
+        toggleText.textContent = '显示Data URL';
+    }
+    
+    // 重新生成Base64
+    const preview = document.getElementById('audioPreview');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        generateAudioBase64(e.target.result, currentAudioFile);
+    };
+    reader.readAsDataURL(currentAudioFile);
+}
+
+function copyAudioBase64() {
+    const output = document.getElementById('audioBase64Output');
+    output.select();
+    document.execCommand('copy');
+    showAudioSuccess('Base64编码已复制到剪贴板');
+}
+
+function downloadAudioBase64() {
+    const output = document.getElementById('audioBase64Output');
+    const content = output.value;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'audio-base64-encoded.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function clearAudio() {
+    currentAudioFile = null;
+    const fileInput = document.getElementById('audioFileInput');
+    if (fileInput) fileInput.value = '';
+    
+    const audioPreviewSection = document.getElementById('audioPreviewSection');
+    if (audioPreviewSection) audioPreviewSection.style.display = 'none';
+    
+    const audioBase64OutputSection = document.getElementById('audioBase64OutputSection');
+    if (audioBase64OutputSection) audioBase64OutputSection.style.display = 'none';
+    
+    const audioBase64Output = document.getElementById('audioBase64Output');
+    if (audioBase64Output) audioBase64Output.value = '';
+    
+    const audioPreview = document.getElementById('audioPreview');
+    if (audioPreview) {
+        audioPreview.pause();
+        audioPreview.src = '';
+    }
+    
+    showAudioDataURL = false;
+    
+    // 重置切换按钮状态
+    const toggleIcon = document.getElementById('audioDataURLToggleIcon');
+    const toggleText = document.getElementById('audioDataURLToggleText');
+    if (toggleIcon) toggleIcon.textContent = '🔗';
+    if (toggleText) toggleText.textContent = '显示Data URL';
+}
+
+// Base64转音频功能
+function decodeAudioBase64() {
+    const input = document.getElementById('audioBase64Input').value.trim();
+    if (!input) {
+        showAudioError('请输入Base64编码');
+        return;
+    }
+    
+    try {
+        let base64Data = input;
+        let mimeType = 'audio/mpeg'; // 默认类型
+        
+        // 检查是否是Data URL格式
+        if (input.startsWith('data:')) {
+            const matches = input.match(/^data:([^;]+);base64,(.+)$/);
+            if (matches) {
+                mimeType = matches[1];
+                base64Data = matches[2];
+            } else {
+                throw new Error('无效的Data URL格式');
+            }
+        }
+        
+        // 验证Base64格式
+        if (!/^[A-Za-z0-9+/]*={0,2}$/.test(base64Data)) {
+            throw new Error('无效的Base64编码');
+        }
+        
+        // 创建音频
+        const dataUrl = `data:${mimeType};base64,${base64Data}`;
+        const audio = document.getElementById('decodedAudio');
+        
+        audio.onloadedmetadata = function() {
+            const duration = audio.duration;
+            const minutes = Math.floor(duration / 60);
+            const seconds = Math.floor(duration % 60);
+            document.getElementById('decodedAudioDuration').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('decodedAudioFormat').textContent = mimeType;
+            
+            // 计算预计文件大小
+            const estimatedSize = (base64Data.length * 0.75);
+            document.getElementById('decodedAudioSize').textContent = formatFileSize(estimatedSize);
+            
+            document.getElementById('decodedAudioSection').style.display = 'block';
+            updateAudioBase64InputStatus('✅ 解码成功', 'status-valid');
+        };
+        
+        audio.onerror = function() {
+            throw new Error('无法解码音频，请检查Base64编码是否正确');
+        };
+        
+        audio.src = dataUrl;
+        
+    } catch (error) {
+        showAudioError('解码失败: ' + error.message);
+        updateAudioBase64InputStatus('❌ 解码失败', 'status-invalid');
+    }
+}
+
+function pasteAudioBase64() {
+    navigator.clipboard.readText().then(text => {
+        document.getElementById('audioBase64Input').value = text;
+        updateAudioBase64InputLength();
+    }).catch(err => {
+        showAudioError('无法访问剪贴板');
+    });
+}
+
+function clearAudioBase64Input() {
+    const audioBase64Input = document.getElementById('audioBase64Input');
+    if (audioBase64Input) audioBase64Input.value = '';
+    
+    const decodedAudioSection = document.getElementById('decodedAudioSection');
+    if (decodedAudioSection) decodedAudioSection.style.display = 'none';
+    
+    const decodedAudio = document.getElementById('decodedAudio');
+    if (decodedAudio) {
+        decodedAudio.pause();
+        decodedAudio.src = '';
+    }
+    
+    updateAudioBase64InputLength();
+    updateAudioBase64InputStatus('等待输入...', '');
+}
+
+function downloadDecodedAudio() {
+    const audio = document.getElementById('decodedAudio');
+    if (!audio.src) return;
+    
+    const a = document.createElement('a');
+    a.href = audio.src;
+    a.download = 'decoded-audio.mp3';
+    a.click();
+}
+
+function playDecodedAudio() {
+    const audio = document.getElementById('decodedAudio');
+    if (audio.src) {
+        if (audio.paused) {
+            audio.play();
+        } else {
+            audio.pause();
+        }
+    }
+}
+
+function updateAudioBase64InputLength() {
+    const input = document.getElementById('audioBase64Input');
+    const lengthElement = document.getElementById('audioBase64InputLength');
+    if (input && lengthElement) {
+        const length = input.value.length;
+        lengthElement.textContent = length.toLocaleString();
+    }
+}
+
+function updateAudioBase64InputStatus(message, className) {
+    const status = document.getElementById('audioBase64InputStatus');
+    if (status) {
+        status.textContent = message;
+        status.className = className;
+    }
+}
+
+// 音频工具函数
+function showAudioError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-display';
+    errorDiv.textContent = message;
+    
+    const container = currentAudioMode === 'toBase64' ? 
+        document.getElementById('audioToBase64Mode') : 
+        document.getElementById('audioToAudioMode');
+    if (container) {
+        container.appendChild(errorDiv);
+        
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+        }, 3000);
+    }
+}
+
+function showAudioSuccess(message) {
+    const successDiv = document.createElement('div');
+    successDiv.className = 'success-display';
+    successDiv.textContent = message;
+    
+    const container = currentAudioMode === 'toBase64' ? 
+        document.getElementById('audioToBase64Mode') : 
+        document.getElementById('audioToAudioMode');
+    if (container) {
+        container.appendChild(successDiv);
+        
+        setTimeout(() => {
+            if (successDiv.parentNode) {
+                successDiv.parentNode.removeChild(successDiv);
+            }
+        }, 3000);
+    }
+}
